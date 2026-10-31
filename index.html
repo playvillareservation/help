@@ -1,0 +1,16 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PLAY Booking Admin - Help & Assist</title>
+<style>body{font-family:"Helvetica Neue",Arial,sans-serif;background:#F0E9DC;color:#6B5240;margin:0;padding:40px 24px}.c{max-width:420px;margin:auto}.logo{text-align:center;font-weight:200;font-size:44px;letter-spacing:.45em;margin:0 0 6px;padding-left:.45em}.sub{text-align:center;font-size:12px;letter-spacing:.3em;text-transform:uppercase;margin-bottom:32px;opacity:.8}label{display:block;font-size:11px;letter-spacing:.2em;text-transform:uppercase;margin:18px 0 6px}select,input,textarea{width:100%;padding:10px 2px;border:0;border-bottom:1px solid #6B5240;background:transparent;color:#6B5240;font-size:15px;font-family:inherit;box-sizing:border-box;outline:none}::placeholder{color:#6B524099}button{margin-top:32px;width:100%;padding:16px;font-size:14px;letter-spacing:.3em;text-transform:uppercase;border:1px solid #6B5240;border-radius:0;background:#6B5240;color:#F0E9DC;cursor:pointer}button:hover{background:transparent;color:#6B5240}#m{margin-top:16px;text-align:center;font-size:13px}</style></head>
+<body><div class="c"><div class="logo">PLAY</div><div class="sub">Booking Admin</div>
+<label>Your name</label><select id="staff"><option>Cathy</option><option>Vanessa</option><option>Jason</option><option>Other</option></select>
+<label>Request type</label><select id="type"><option>New booking (quotation)</option><option>New booking payment</option><option>Clear balance payment</option><option>Block dates</option><option>Other</option></select>
+<label>Property</label><select id="prop"><option>Hillcrest Dawn</option><option>Serene by PLAY / Redhouse</option><option>Lot 31 Melaka</option><option>Palas Horizon Kea Farm</option></select>
+<label>OB number / Quotation no.</label><input id="ref" placeholder="e.g. OB394 or QT-1122">
+<label>Note</label><textarea id="note" rows="3" placeholder="Files already sent in Booking Confirm WhatsApp"></textarea>
+<button onclick="go()">Help &amp; Assist</button><div id="m"></div></div>
+<script>
+const WEBHOOK_URL="https://api2.cursor.sh/automations/webhook/0a599d5c-779e-5ea7-bf98-2019ef9332f2"; const KEY="crsr_28177e49e02fae070c758a344fa5ecdcced8496a7a87b2724db1400ae22c69cf";
+async function go(){const v=i=>document.getElementById(i).value;const m=document.getElementById('m');m.textContent='Sending...';
+try{const r=await fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+KEY},body:JSON.stringify({staff:v('staff'),type:v('type'),property:v('prop'),reference:v('ref'),note:v('note'),sent:new Date().toString()})});
+m.textContent=r.ok?'✅ Sent! Booking Admin is on it.':'⚠️ Failed ('+r.status+')';}catch(e){m.textContent='⚠️ Could not send';}}
+</script></body></html>
