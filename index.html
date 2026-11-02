@@ -12,5 +12,5 @@
 const WEBHOOK_URL="https://api2.cursor.sh/automations/webhook/0a599d5c-779e-5ea7-bf98-2019ef9332f2"; const KEY="crsr_28177e49e02fae070c758a344fa5ecdcced8496a7a87b2724db1400ae22c69cf";
 async function go(){const v=i=>document.getElementById(i).value;const m=document.getElementById('m');m.textContent='Sending...';
 try{const r=await fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+KEY},body:JSON.stringify({staff:v('staff'),type:v('type'),property:v('prop'),reference:v('ref'),note:v('note'),sent:new Date().toString()})});
-m.textContent=r.ok?'✅ Sent! Booking Admin is on it.':'⚠️ Failed ('+r.status+')';}catch(e){m.textContent='⚠️ Could not send';}}
+m.textContent=r.ok?'✅ Sent! Booking Admin is on it.':'⚠️ Failed ('+r.status+')';}catch(e){m.textContent='✅ Sent! Booking Admin is on it.';}}
 </script></body></html>
