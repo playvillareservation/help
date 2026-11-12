@@ -1,4 +1,375 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PLAY Booking Admin</title>
-<style>body{font-family:"Helvetica Neue",Arial,sans-serif;background:#F0E9DC;color:#6B5240;margin:0;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center}.logo{font-weight:200;font-size:44px;letter-spacing:.45em;padding-left:.45em}.sub{font-size:12px;letter-spacing:.3em;text-transform:uppercase;margin:6px 0 40px;opacity:.8}button{width:220px;height:220px;border-radius:50%;border:0;background:#6B5240;color:#F0E9DC;font-size:20px;letter-spacing:.15em;cursor:pointer}button:active{transform:scale(.96)}#m{margin-top:24px;font-size:15px;min-height:20px}</style></head>
-<body><div class="logo">PLAY</div><div class="sub">Booking Admin</div><button onclick="go()">PRESS<br>TO WAKE</button><div id="m"></div>
-<script>async function go(){const m=document.getElementById('m');m.textContent='Sending...';try{const r=await fetch("https://api2.cursor.sh/automations/webhook/0a599d5c-779e-5ea7-bf98-2019ef9332f2",{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer crsr_28177e49e02fae070c758a344fa5ecdcced8496a7a87b2724db1400ae22c69cf'},body:JSON.stringify({staff:'Button press',type:'Wake - check Booking Confirm',sent:new Date().toString()})});m.textContent=r.ok?'✅ Booking Admin is on it!':'⚠️ Failed, try again';}catch(e){m.textContent='✅ Booking Admin is on it!';}}</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#F0E9DC">
+<title>PLAY Booking Admin - Help &amp; Assist</title>
+<style>
+:root{--bg:#F0E9DC;--fg:#6B5240;--err:#A23B2A;--ok:#3F6B3A}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;background:var(--bg)}
+body{font-family:"Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--fg);margin:0;padding:32px 20px calc(48px + env(safe-area-inset-bottom))}
+.c{max-width:460px;margin:auto}
+.logo{text-align:center;font-weight:200;font-size:44px;letter-spacing:.45em;margin:0 0 6px;padding-left:.45em}
+.sub{text-align:center;font-size:12px;letter-spacing:.3em;text-transform:uppercase;margin-bottom:28px;opacity:.8}
+label,.lbl{display:block;font-size:11px;letter-spacing:.2em;text-transform:uppercase;margin:22px 0 6px}
+.req::after{content:" *";opacity:.7}
+select,input,textarea{width:100%;padding:10px 2px;border:0;border-bottom:1px solid var(--fg);border-radius:0;background:transparent;color:var(--fg);font-size:16px;font-family:inherit;outline:none;-webkit-appearance:none;appearance:none}
+select{background-image:linear-gradient(45deg,transparent 50%,var(--fg) 50%),linear-gradient(135deg,var(--fg) 50%,transparent 50%);background-position:calc(100% - 12px) 55%,calc(100% - 7px) 55%;background-size:5px 5px;background-repeat:no-repeat;padding-right:24px}
+input[type=date]{min-height:42px}
+::placeholder{color:#6B524099}
+.row{display:flex;gap:16px}.row>div{flex:1;min-width:0}
+.seg{display:flex;border:1px solid var(--fg)}
+.seg label{flex:1;margin:0;text-align:center;padding:12px 4px;cursor:pointer;font-size:11px;letter-spacing:.12em;border-left:1px solid var(--fg);user-select:none}
+.seg label:first-child{border-left:0}
+.seg input{position:absolute;opacity:0;width:1px;height:1px}
+.seg label.on{background:var(--fg);color:var(--bg)}
+.bid{display:flex;gap:12px;align-items:flex-end}.bid select{width:96px;flex:none}.bid input{flex:1}
+.hidden{display:none!important}
+.btns{display:flex;gap:10px;margin-top:4px}
+.btn2{flex:1;padding:13px 6px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;border:1px solid var(--fg);background:transparent;color:var(--fg);cursor:pointer;font-family:inherit;text-align:center;margin:0}
+.btn2:active{background:var(--fg);color:var(--bg)}
+#pasteZone{margin-top:10px;border:1px dashed var(--fg);padding:12px;font-size:13px;text-align:center;min-height:44px;opacity:.85;outline:none;-webkit-user-select:text;user-select:text}
+#pasteZone:focus{opacity:1;border-style:solid}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;margin-top:12px}
+.th{position:relative;border:1px solid #6B524055;background:#fff6;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.th img{width:100%;height:100%;object-fit:cover}
+.th .doc{font-size:12px;text-align:center;padding:6px;word-break:break-all}
+.th .doc b{display:block;font-size:20px;letter-spacing:.1em;margin-bottom:4px}
+.th .x{position:absolute;top:3px;right:3px;width:28px;height:28px;border-radius:50%;border:0;background:var(--fg);color:var(--bg);font-size:16px;line-height:28px;padding:0;margin:0;cursor:pointer}
+.th .sz{position:absolute;left:0;right:0;bottom:0;background:#6B5240cc;color:var(--bg);font-size:10px;padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hint{font-size:12px;opacity:.75;margin-top:6px}
+.ferr{color:var(--err);font-size:12px;margin-top:6px}
+.bad{border-bottom-color:var(--err)!important}
+#go{margin-top:34px;width:100%;padding:18px;font-size:15px;letter-spacing:.35em;text-transform:uppercase;border:1px solid var(--fg);border-radius:0;background:var(--fg);color:var(--bg);cursor:pointer;font-family:inherit}
+#go:disabled{opacity:.55;cursor:wait}
+#m{margin-top:18px;text-align:center;font-size:14px;line-height:1.5;white-space:pre-line}
+#m.ok{color:var(--ok);border:1px solid var(--ok);padding:14px}
+#m.err{color:var(--err);border:1px solid var(--err);padding:14px}
+#m .rid{display:block;font-size:18px;letter-spacing:.08em;margin-top:6px;font-weight:600;-webkit-user-select:all;user-select:all}
+</style>
+</head>
+<body>
+<div class="c">
+  <div class="logo">PLAY</div>
+  <div class="sub">Booking Admin &middot; Help &amp; Assist</div>
+
+  <form id="f" novalidate autocomplete="off">
+    <label for="pic" class="req">PIC</label>
+    <select id="pic" required>
+      <option value="">Select your name</option>
+      <option>Cathy</option><option>Vanessa</option><option>Jason</option>
+    </select>
+    <div class="ferr hidden" data-for="pic"></div>
+
+    <div class="row">
+      <div>
+        <label for="checkIn" class="req">Check-in date</label>
+        <input id="checkIn" type="date" required>
+        <div class="ferr hidden" data-for="checkIn"></div>
+      </div>
+      <div style="flex:.6">
+        <label for="nights" class="req">Nights</label>
+        <input id="nights" type="number" inputmode="numeric" min="1" max="60" step="1" value="1" required>
+        <div class="ferr hidden" data-for="nights"></div>
+      </div>
+    </div>
+
+    <span class="lbl req">Assist on</span>
+    <div class="seg" id="assistSeg" role="radiogroup">
+      <label><input type="radio" name="assist" value="New Booking">New Booking</label>
+      <label><input type="radio" name="assist" value="Clear Payment">Clear Payment</label>
+      <label><input type="radio" name="assist" value="Other">Other</label>
+    </div>
+    <div class="ferr hidden" data-for="assist"></div>
+
+    <div id="otherBox" class="hidden">
+      <label for="otherText" class="req">Please describe</label>
+      <input id="otherText" maxlength="300" placeholder="What do you need help with?">
+      <div class="ferr hidden" data-for="otherText"></div>
+    </div>
+
+    <div id="bookingBox" class="hidden">
+      <label for="bookingNumber" class="req">Booking ID</label>
+      <div class="bid">
+        <select id="bookingPrefix"><option>OB</option><option>RES</option></select>
+        <input id="bookingNumber" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="e.g. 363">
+      </div>
+      <div class="hint" id="bidPreview"></div>
+      <div class="ferr hidden" data-for="bookingNumber"></div>
+    </div>
+
+    <span class="lbl" id="filesLbl">Receipt / quotation (PDF or picture)</span>
+    <div class="btns">
+      <label class="btn2" for="fileInput">+ Add files</label>
+      <button type="button" class="btn2" id="pasteBtn">Paste screenshot</button>
+    </div>
+    <input id="fileInput" type="file" accept="image/*,application/pdf,.pdf" multiple class="hidden">
+    <div id="pasteZone" contenteditable="true" aria-label="Paste area">Or tap here, long-press and choose Paste (Ctrl+V works on computer)</div>
+    <div class="thumbs" id="thumbs"></div>
+    <div class="hint" id="sizeHint"></div>
+    <div class="ferr hidden" data-for="files"></div>
+
+    <label for="note">Note (optional)</label>
+    <textarea id="note" rows="3" maxlength="1000" placeholder="e.g. guest name, amount, anything Booking Admin should know"></textarea>
+
+    <button id="go" type="submit">Assist</button>
+    <div id="m" role="status" aria-live="polite"></div>
+  </form>
+</div>
+
+<script>
+// ===== Fill this in after deploying Code.gs as a web app (ends with /exec) =====
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzlUXaNjWgqgO8DCqsY3DucTHk84lWzaDhPfdsPK1RMyrVSzKosMWH5th64dOprEe2D/exec";
+// ==============================================================================
+
+const MAX_TOTAL_BYTES = 25 * 1024 * 1024;   // total of all attachments after compression
+const MAX_FILES = 15;
+const IMG_MAX_DIM = 2000;
+const IMG_QUALITY = 0.85;
+const IMG_COMPRESS_OVER = 1.2 * 1024 * 1024; // re-encode images bigger than this or larger than IMG_MAX_DIM
+const NEEDS_FILES = ["New Booking", "Clear Payment"];
+
+const $ = id => document.getElementById(id);
+const attachments = []; // {id, name, mimeType, size, dataUrl, thumb}
+let seq = 0;
+let sending = false;
+
+/* ---------- pure helpers (also used by the smoke test) ---------- */
+function buildBookingId(prefix, number) {
+  const n = String(number || "").replace(/\D/g, "");
+  return n ? String(prefix || "OB").toUpperCase() + n : "";
+}
+function fmtSize(b) {
+  return b >= 1048576 ? (b / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(b / 1024)) + " KB";
+}
+function dataUrlBytes(dataUrl) {
+  const b64 = String(dataUrl).split(",")[1] || "";
+  const pad = b64.endsWith("==") ? 2 : b64.endsWith("=") ? 1 : 0;
+  return Math.floor(b64.length * 3 / 4) - pad;
+}
+function validate(d, files) {
+  const errs = {};
+  if (!["Cathy", "Vanessa", "Jason"].includes(d.pic)) errs.pic = "Please choose your name.";
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(d.checkIn || "")) errs.checkIn = "Please pick the check-in date.";
+  const n = Number(d.nights);
+  if (!Number.isInteger(n) || n < 1 || n > 60) errs.nights = "Nights must be 1 to 60.";
+  if (!["New Booking", "Clear Payment", "Other"].includes(d.assistType)) errs.assist = "Please choose what you need help with.";
+  if (d.assistType === "Other" && !String(d.otherText || "").trim()) errs.otherText = "Please describe what you need.";
+  if (d.assistType === "Clear Payment" && !/^\d+$/.test(String(d.bookingNumber || ""))) errs.bookingNumber = "Please key in the booking number (digits only).";
+  if (NEEDS_FILES.includes(d.assistType) && (!files || files.length === 0)) errs.files = "Please attach at least one receipt, quotation or screenshot.";
+  const total = (files || []).reduce((s, f) => s + (f.size || 0), 0);
+  if (total > MAX_TOTAL_BYTES) errs.files = "Attachments are " + fmtSize(total) + ". Please keep the total under " + fmtSize(MAX_TOTAL_BYTES) + ".";
+  if ((files || []).length > MAX_FILES) errs.files = "Please attach at most " + MAX_FILES + " files.";
+  return errs;
+}
+
+/* ---------- form state ---------- */
+function readForm() {
+  const a = document.querySelector('input[name="assist"]:checked');
+  const assistType = a ? a.value : "";
+  const prefix = $("bookingPrefix").value;
+  const number = $("bookingNumber").value.trim();
+  return {
+    pic: $("pic").value,
+    checkIn: $("checkIn").value,
+    nights: $("nights").value,
+    assistType,
+    otherText: assistType === "Other" ? $("otherText").value.trim() : "",
+    bookingPrefix: assistType === "Clear Payment" ? prefix : "",
+    bookingNumber: assistType === "Clear Payment" ? number : "",
+    bookingId: assistType === "Clear Payment" ? buildBookingId(prefix, number) : "",
+    note: $("note").value.trim()
+  };
+}
+function refreshAssist() {
+  const t = readForm().assistType;
+  document.querySelectorAll("#assistSeg label").forEach(l => l.classList.toggle("on", l.querySelector("input").checked));
+  $("otherBox").classList.toggle("hidden", t !== "Other");
+  $("bookingBox").classList.toggle("hidden", t !== "Clear Payment");
+  $("filesLbl").classList.toggle("req", NEEDS_FILES.includes(t));
+  refreshBid();
+}
+function refreshBid() {
+  const id = buildBookingId($("bookingPrefix").value, $("bookingNumber").value);
+  $("bidPreview").textContent = id ? "Booking ID: " + id : "";
+}
+function showErrors(errs) {
+  document.querySelectorAll(".ferr").forEach(e => { e.classList.add("hidden"); e.textContent = ""; });
+  document.querySelectorAll(".bad").forEach(e => e.classList.remove("bad"));
+  let first = null;
+  Object.keys(errs).forEach(k => {
+    const box = document.querySelector('.ferr[data-for="' + k + '"]');
+    if (box) { box.textContent = errs[k]; box.classList.remove("hidden"); first = first || box; }
+    const el = $(k); if (el) el.classList.add("bad");
+  });
+  if (first) first.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+function setMsg(kind, html) { const m = $("m"); m.className = kind || ""; m.innerHTML = html || ""; }
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+/* ---------- attachments ---------- */
+function readAsDataURL(blob) {
+  return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(r.error); r.readAsDataURL(blob); });
+}
+function loadImage(src) {
+  return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error("decode")); i.src = src; });
+}
+async function prepareImage(blob, name) {
+  const original = await readAsDataURL(blob);
+  if (/gif|svg/i.test(blob.type)) return { dataUrl: original, mimeType: blob.type, name };
+  let img;
+  try { img = await loadImage(original); } catch (e) { return { dataUrl: original, mimeType: blob.type || "application/octet-stream", name }; } // e.g. HEIC on Android/Chrome: send as-is
+  const big = Math.max(img.naturalWidth, img.naturalHeight) > IMG_MAX_DIM;
+  if (!big && blob.size <= IMG_COMPRESS_OVER) return { dataUrl: original, mimeType: blob.type || "image/png", name };
+  const scale = Math.min(1, IMG_MAX_DIM / Math.max(img.naturalWidth, img.naturalHeight));
+  const c = document.createElement("canvas");
+  c.width = Math.round(img.naturalWidth * scale); c.height = Math.round(img.naturalHeight * scale);
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height); // PNG transparency -> white
+  ctx.drawImage(img, 0, 0, c.width, c.height);
+  const jpg = c.toDataURL("image/jpeg", IMG_QUALITY);
+  if (dataUrlBytes(jpg) >= blob.size && !big) return { dataUrl: original, mimeType: blob.type, name };
+  return { dataUrl: jpg, mimeType: "image/jpeg", name: name.replace(/\.[^.]+$/, "") + ".jpg" };
+}
+async function addBlob(blob, name) {
+  if (!blob) return;
+  const isImg = /^image\//.test(blob.type) || /\.(jpe?g|png|webp|heic|heif|gif)$/i.test(name);
+  const isPdf = blob.type === "application/pdf" || /\.pdf$/i.test(name);
+  if (!isImg && !isPdf) { setMsg("err", "Only PDF or picture files, please (" + esc(name) + ")."); return; }
+  if (attachments.length >= MAX_FILES) { setMsg("err", "Maximum " + MAX_FILES + " files."); return; }
+  const prep = isImg ? await prepareImage(blob, name) : { dataUrl: await readAsDataURL(blob), mimeType: "application/pdf", name };
+  const a = { id: ++seq, name: prep.name, mimeType: prep.mimeType, dataUrl: prep.dataUrl, size: dataUrlBytes(prep.dataUrl) };
+  attachments.push(a);
+  renderThumbs();
+  if (document.querySelector('.ferr[data-for="files"]:not(.hidden)')) showErrors({});
+  if ($("m").className === "err") setMsg("", "");
+}
+function stamp() { const d = new Date(), p = n => String(n).padStart(2, "0"); return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + "-" + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds()); }
+function screenshotName(type) { return "screenshot-" + stamp() + "-" + (attachments.length + 1) + "." + ((type || "image/png").split("/")[1] || "png").replace("jpeg", "jpg"); }
+function removeAttachment(id) { const i = attachments.findIndex(a => a.id === id); if (i >= 0) attachments.splice(i, 1); renderThumbs(); }
+function renderThumbs() {
+  const box = $("thumbs"); box.innerHTML = "";
+  attachments.forEach(a => {
+    const d = document.createElement("div"); d.className = "th";
+    if (/^image\/(png|jpe?g|webp|gif)/.test(a.mimeType)) { const i = document.createElement("img"); i.src = a.dataUrl; i.alt = a.name; d.appendChild(i); }
+    else { const t = document.createElement("div"); t.className = "doc"; t.innerHTML = "<b>" + (a.mimeType === "application/pdf" ? "PDF" : "FILE") + "</b>" + esc(a.name); d.appendChild(t); }
+    const s = document.createElement("div"); s.className = "sz"; s.textContent = fmtSize(a.size) + " · " + a.name; d.appendChild(s);
+    const x = document.createElement("button"); x.type = "button"; x.className = "x"; x.textContent = "×"; x.setAttribute("aria-label", "Remove " + a.name);
+    x.onclick = () => removeAttachment(a.id); d.appendChild(x);
+    box.appendChild(d);
+  });
+  const total = attachments.reduce((s, a) => s + a.size, 0);
+  $("sizeHint").textContent = attachments.length ? attachments.length + " file(s), " + fmtSize(total) + " of " + fmtSize(MAX_TOTAL_BYTES) : "";
+}
+async function handleClipboardData(cd) {
+  if (!cd) return false;
+  let found = false;
+  for (const item of Array.from(cd.items || [])) {
+    if (item.kind === "file") {
+      const f = item.getAsFile();
+      if (f && (/^image\//.test(f.type) || f.type === "application/pdf")) {
+        found = true;
+        await addBlob(f, f.name && f.name !== "image.png" ? f.name : screenshotName(f.type));
+      }
+    }
+  }
+  return found;
+}
+async function pasteFromButton() {
+  if (navigator.clipboard && navigator.clipboard.read) {
+    try {
+      const items = await navigator.clipboard.read();
+      let found = false;
+      for (const it of items) {
+        const t = it.types.find(x => /^image\//.test(x));
+        if (t) { found = true; const b = await it.getType(t); await addBlob(b, screenshotName(t)); }
+      }
+      if (!found) setMsg("err", "No picture on the clipboard. Take or copy a screenshot first, then tap Paste screenshot.");
+      return;
+    } catch (e) { /* permission denied or unsupported: fall through to the paste area */ }
+  }
+  $("pasteZone").focus();
+  setMsg("", "Long-press the dotted box and choose Paste (or press Ctrl+V).");
+}
+
+/* ---------- submit ---------- */
+async function submit(ev) {
+  ev.preventDefault();
+  if (sending) return;
+  const d = readForm();
+  const errs = validate(d, attachments);
+  showErrors(errs);
+  if (Object.keys(errs).length) { setMsg("err", "Please fix the highlighted fields."); return; }
+  if (!/^https:\/\/script\.google\.com\//.test(APPS_SCRIPT_URL)) { setMsg("err", "This page is not connected yet (APPS_SCRIPT_URL is not set). Please tell the boss."); return; }
+
+  sending = true; $("go").disabled = true; $("go").textContent = "Sending…";
+  setMsg("", "Uploading " + attachments.length + " file(s)… please keep this page open.");
+  const payload = Object.assign({}, d, {
+    nights: Number(d.nights),
+    files: attachments.map(a => ({ name: a.name, mimeType: a.mimeType, data: a.dataUrl.split(",")[1] })),
+    userAgent: navigator.userAgent,
+    clientTime: new Date().toString()
+  });
+  try {
+    const r = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" }, // simple request: no CORS preflight
+      body: JSON.stringify(payload),
+      redirect: "follow"
+    });
+    let j = null;
+    try { j = await r.json(); } catch (e) { /* not JSON */ }
+    if (!r.ok || !j) throw new Error("Server error (" + r.status + "). Nothing may have been saved.");
+    if (!j.ok) throw new Error(j.error || "The request was not accepted.");
+    let html = "✅ Sent! Booking Admin is on it.<span class=\"rid\">" + esc(j.requestId) + "</span>Keep this ID if you need to follow up.";
+    if (j.warning) html += "\n(" + esc(j.warning) + ")";
+    setMsg("ok", html);
+    resetForm(d.pic);
+  } catch (e) {
+    setMsg("err", "⚠️ Not sent. " + esc(e && e.message ? e.message : e) + "\nPlease check your connection and press Assist again. Your entries are still here.");
+  } finally {
+    sending = false; $("go").disabled = false; $("go").textContent = "Assist";
+  }
+}
+function resetForm(keepPic) {
+  $("f").reset();
+  $("pic").value = keepPic || "";
+  $("nights").value = "1";
+  attachments.splice(0, attachments.length);
+  renderThumbs(); refreshAssist(); showErrors({});
+  try { localStorage.setItem("play_assist_pic", keepPic || ""); } catch (e) {}
+}
+
+/* ---------- wiring ---------- */
+function init() {
+  try { const p = localStorage.getItem("play_assist_pic"); if (p) $("pic").value = p; } catch (e) {}
+  document.querySelectorAll('input[name="assist"]').forEach(r => r.addEventListener("change", refreshAssist));
+  $("bookingPrefix").addEventListener("change", refreshBid);
+  $("bookingNumber").addEventListener("input", e => { const v = e.target.value.replace(/\D/g, ""); if (v !== e.target.value) e.target.value = v; refreshBid(); });
+  $("fileInput").addEventListener("change", async e => { for (const f of Array.from(e.target.files || [])) await addBlob(f, f.name || "file"); e.target.value = ""; });
+  $("pasteBtn").addEventListener("click", pasteFromButton);
+  const zone = $("pasteZone"), zoneText = zone.textContent;
+  zone.addEventListener("beforeinput", e => { if (e.inputType !== "insertFromPaste") e.preventDefault(); });
+  zone.addEventListener("input", () => { if (zone.textContent !== zoneText) zone.textContent = zoneText; });
+  document.addEventListener("paste", async e => {
+    const inField = e.target !== zone && /^(INPUT|TEXTAREA)$/.test(e.target.tagName || "");
+    const hasFile = Array.from((e.clipboardData && e.clipboardData.items) || []).some(i => i.kind === "file");
+    if (inField && !hasFile) return; // let normal text paste into fields
+    e.preventDefault();
+    const ok = await handleClipboardData(e.clipboardData);
+    if (!ok) setMsg("err", "No picture on the clipboard. Copy a screenshot first.");
+    zone.textContent = zoneText;
+  });
+  ["dragover", "drop"].forEach(t => document.addEventListener(t, async e => {
+    e.preventDefault();
+    if (t === "drop") for (const f of Array.from(e.dataTransfer.files || [])) await addBlob(f, f.name || "file");
+  }));
+  $("f").addEventListener("submit", submit);
+  refreshAssist();
+}
+if (typeof document !== "undefined" && document.getElementById("f")) init();
+</script>
+</body>
+</html>
