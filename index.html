@@ -42,8 +42,12 @@ input[type=date]{min-height:42px}
 .hint{font-size:12px;opacity:.75;margin-top:6px}
 .ferr{color:var(--err);font-size:12px;margin-top:6px}
 .bad{border-bottom-color:var(--err)!important}
-#go{margin-top:34px;width:100%;padding:18px;font-size:15px;letter-spacing:.35em;text-transform:uppercase;border:1px solid var(--fg);border-radius:0;background:var(--fg);color:var(--bg);cursor:pointer;font-family:inherit}
-#go:disabled{opacity:.55;cursor:wait}
+#go,#sendBtn{margin-top:34px;width:100%;padding:18px;font-size:15px;letter-spacing:.35em;text-transform:uppercase;border:1px solid var(--fg);border-radius:0;background:var(--fg);color:var(--bg);cursor:pointer;font-family:inherit}
+#go:disabled,#sendBtn:disabled{opacity:.55;cursor:wait}
+#sendBtn{margin-top:10px}
+#review .btns{margin-top:28px}
+#protoNote{margin-top:-18px}
+.rvv{font-size:16px;line-height:1.4;padding:8px 2px 10px;border-bottom:1px solid var(--fg);white-space:pre-wrap;overflow-wrap:anywhere}
 #m{margin-top:18px;text-align:center;font-size:14px;line-height:1.5;white-space:pre-line}
 #m.ok{color:var(--ok);border:1px solid var(--ok);padding:14px}
 #m.err{color:var(--err);border:1px solid var(--err);padding:14px}
@@ -54,6 +58,7 @@ input[type=date]{min-height:42px}
 <div class="c">
   <div class="logo">PLAY</div>
   <div class="sub">Booking Admin &middot; Help &amp; Assist</div>
+  <div id="protoNote" class="sub hidden">Demo mode. Nothing is sent.</div>
 
   <form id="f" novalidate autocomplete="off">
     <label for="pic" class="req">PIC</label>
@@ -118,8 +123,17 @@ input[type=date]{min-height:42px}
     <textarea id="note" rows="3" maxlength="1000" placeholder="e.g. guest name, amount, anything Booking Admin should know"></textarea>
 
     <button id="go" type="submit">Assist</button>
-    <div id="m" role="status" aria-live="polite"></div>
   </form>
+
+  <div id="review" class="hidden">
+    <span class="lbl">Review</span>
+    <div id="rv"></div>
+    <div class="btns">
+      <button type="button" class="btn2" id="editBtn">Edit</button>
+    </div>
+    <button type="button" id="sendBtn">Send request</button>
+  </div>
+  <div id="m" role="status" aria-live="polite"></div>
 </div>
 
 <script>
@@ -133,6 +147,7 @@ const IMG_MAX_DIM = 2000;
 const IMG_QUALITY = 0.85;
 const IMG_COMPRESS_OVER = 1.2 * 1024 * 1024; // re-encode images bigger than this or larger than IMG_MAX_DIM
 const NEEDS_FILES = ["New Booking", "Clear Payment"];
+const DEMO_REQUEST_ID = "PLAY-2041";
 
 const $ = id => document.getElementById(id);
 const attachments = []; // {id, name, mimeType, size, dataUrl, thumb}
@@ -237,6 +252,44 @@ function showErrors(errs) {
 }
 function setMsg(kind, html) { const m = $("m"); m.className = kind || ""; m.innerHTML = html || ""; }
 function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+function isDemo() {
+  if (typeof location === "undefined" || !location.search) return false;
+  return new URLSearchParams(location.search).get("proto") === "1";
+}
+function fmtCheckIn(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || "");
+  if (!m) return iso || "";
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  return Number(m[3]) + " " + months[Number(m[2]) - 1] + " " + m[1];
+}
+function fileCountLabel(n) { return n === 1 ? "1 file" : n + " files"; }
+function renderReview(d) {
+  const rows = [
+    ["PIC", d.pic],
+    ["Check-in date", fmtCheckIn(d.checkIn)],
+    ["Nights", String(Number(d.nights))],
+    ["Assist on", d.assistType]
+  ];
+  if (d.assistType === "Other") rows.push(["Please describe", d.otherText]);
+  if (d.assistType === "Clear Payment") rows.push(["Booking ID", d.bookingId]);
+  rows.push(["Files", fileCountLabel(attachments.length)], ["Note", d.note || "None"]);
+  const box = $("rv");
+  box.innerHTML = "";
+  rows.forEach(row => {
+    const lab = document.createElement("div");
+    lab.className = "lbl";
+    lab.textContent = row[0];
+    const val = document.createElement("div");
+    val.className = "rvv";
+    val.textContent = row[1];
+    box.appendChild(lab);
+    box.appendChild(val);
+  });
+}
+function showPanel(which) {
+  $("f").classList.toggle("hidden", which !== "form");
+  $("review").classList.toggle("hidden", which !== "review");
+}
 
 /* ---------- attachments ---------- */
 function readAsDataURL(blob) {
@@ -323,17 +376,51 @@ async function pasteFromButton() {
   setMsg("", "Long-press the dotted box and choose Paste (or press Ctrl+V).");
 }
 
-/* ---------- submit ---------- */
-async function submit(ev) {
-  ev.preventDefault();
+/* ---------- review, then submit ---------- */
+function openReview(ev) {
+  if (ev) ev.preventDefault();
   if (sending) return;
   const d = readForm();
   const errs = validate(d, attachments);
   showErrors(errs);
   if (Object.keys(errs).length) { setMsg("err", "Please fix the highlighted fields."); return; }
+  renderReview(d);
+  $("sendBtn").disabled = false;
+  $("sendBtn").textContent = "Send request";
+  showPanel("review");
+  setMsg("", "");
+  window.scrollTo(0, 0);
+}
+function onEdit() {
+  if (sending) return;
+  showPanel("form");
+  setMsg("", "");
+  window.scrollTo(0, 0);
+}
+function showDemoSent() {
+  // Demo mode (?proto=1) stops here. Do not build a payload and do not fetch APPS_SCRIPT_URL.
+  setMsg("ok", "✅ Sent! Booking Admin is on it.<span class=\"rid\">" + esc(DEMO_REQUEST_ID) + "</span>Sample request. Nothing was sent.");
+  $("sendBtn").disabled = true;
+  $("m").scrollIntoView({ block: "nearest" });
+}
+async function confirmSend() {
+  if (sending) return;
+  const d = readForm();
+  const errs = validate(d, attachments);
+  if (Object.keys(errs).length) {
+    showPanel("form");
+    showErrors(errs);
+    setMsg("err", "Please fix the highlighted fields.");
+    return;
+  }
+  if (isDemo()) { showDemoSent(); return; }
+  await sendToScript(d);
+}
+async function sendToScript(d) {
+  if (isDemo()) return;
   if (!/^https:\/\/script\.google\.com\//.test(APPS_SCRIPT_URL)) { setMsg("err", "This page is not connected yet (APPS_SCRIPT_URL is not set). Please tell the boss."); return; }
 
-  sending = true; $("go").disabled = true; $("go").textContent = "Sending…";
+  sending = true; $("sendBtn").disabled = true; $("sendBtn").textContent = "Sending…";
   setMsg("", "Uploading " + attachments.length + " file(s)… please keep this page open.");
   const payload = Object.assign({}, d, {
     nights: Number(d.nights),
@@ -356,10 +443,13 @@ async function submit(ev) {
     if (j.warning) html += "\n(" + esc(j.warning) + ")";
     setMsg("ok", html);
     resetForm(d.pic);
+    showPanel("form");
+    $("m").scrollIntoView({ block: "nearest" });
   } catch (e) {
-    setMsg("err", "⚠️ Not sent. " + esc(e && e.message ? e.message : e) + "\nPlease check your connection and press Assist again. Your entries are still here.");
+    setMsg("err", "⚠️ Not sent. " + esc(e && e.message ? e.message : e) + "\nPlease check your connection and press Send request again. Your entries are still here.");
+    $("m").scrollIntoView({ block: "nearest" });
   } finally {
-    sending = false; $("go").disabled = false; $("go").textContent = "Assist";
+    sending = false; $("sendBtn").disabled = false; $("sendBtn").textContent = "Send request";
   }
 }
 function resetForm(keepPic) {
@@ -400,7 +490,10 @@ function init() {
     e.preventDefault();
     if (t === "drop") for (const f of Array.from(e.dataTransfer.files || [])) await addBlob(f, f.name || "file");
   }));
-  $("f").addEventListener("submit", submit);
+  $("f").addEventListener("submit", openReview);
+  $("editBtn").addEventListener("click", onEdit);
+  $("sendBtn").addEventListener("click", confirmSend);
+  if (isDemo()) $("protoNote").classList.remove("hidden");
   refreshAssist();
 }
 if (typeof document !== "undefined" && document.getElementById("f")) init();
