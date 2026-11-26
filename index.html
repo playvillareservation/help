@@ -25,7 +25,7 @@ input[type=date]{min-height:42px}
 .seg label:first-child{border-left:0}
 .seg input{position:absolute;opacity:0;width:1px;height:1px}
 .seg label.on{background:var(--fg);color:var(--bg)}
-.bid{display:flex;gap:12px;align-items:flex-end}.bid select{width:128px;flex:none}.bid input{flex:1}
+.bid{display:flex;gap:12px;align-items:flex-end}.bid select{width:96px;flex:none}.bid input{flex:1}
 .hidden{display:none!important}
 .btns{display:flex;gap:10px;margin-top:4px}
 .btn2{flex:1;padding:13px 6px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;border:1px solid var(--fg);background:transparent;color:var(--fg);cursor:pointer;font-family:inherit;text-align:center;margin:0}
@@ -96,9 +96,8 @@ input[type=date]{min-height:42px}
         <select id="bookingPrefix" aria-label="Booking ID type">
           <option>OB</option>
           <option>RES</option>
-          <option>Cloudbeds</option>
         </select>
-        <input id="bookingNumber" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="e.g. 363" autocomplete="off" autocapitalize="off" spellcheck="false">
+        <input id="bookingNumber" type="text" inputmode="text" maxlength="10" placeholder="e.g. 363 or 6F5H4RS1J6" autocomplete="off" autocapitalize="characters" spellcheck="false">
       </div>
       <div class="hint" id="bidPreview"></div>
       <div class="ferr hidden" data-for="bookingNumber"></div>
@@ -141,21 +140,15 @@ let seq = 0;
 let sending = false;
 
 /* ---------- pure helpers (also used by the smoke test) ---------- */
-function isCloudbedsPrefix(prefix) {
-  return String(prefix || "") === "Cloudbeds";
-}
 function normalizeBookingNumber(prefix, number) {
   const raw = String(number || "");
-  if (isCloudbedsPrefix(prefix)) return raw.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10);
+  if (String(prefix || "OB").toUpperCase() === "OB") return raw.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10);
   return raw.replace(/\D/g, "");
 }
 function buildBookingId(prefix, number) {
-  const p = String(prefix || "OB");
+  const p = String(prefix || "OB").toUpperCase();
   const n = normalizeBookingNumber(p, number);
-  if (!n) return "";
-  // Cloudbeds reservation IDs are the code itself, e.g. 6F5H4RS1J6. Do not prefix OB and do not drop letters.
-  if (isCloudbedsPrefix(p)) return n;
-  return p.toUpperCase() + n;
+  return n ? p + n : "";
 }
 function fmtSize(b) {
   return b >= 1048576 ? (b / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(b / 1024)) + " KB";
@@ -174,8 +167,8 @@ function validate(d, files) {
   if (!["New Booking", "Clear Payment", "Other"].includes(d.assistType)) errs.assist = "Please choose what you need help with.";
   if (d.assistType === "Other" && !String(d.otherText || "").trim()) errs.otherText = "Please describe what you need.";
   if (d.assistType === "Clear Payment") {
-    if (isCloudbedsPrefix(d.bookingPrefix)) {
-      if (!/^[A-Z0-9]{10}$/.test(String(d.bookingId || ""))) errs.bookingNumber = "Please key in the 10-character Cloudbeds ID (letters and digits).";
+    if (String(d.bookingPrefix || "OB").toUpperCase() === "OB") {
+      if (!/^[A-Z0-9]+$/.test(String(d.bookingNumber || ""))) errs.bookingNumber = "Please key in the booking number (letters and digits).";
     } else if (!/^\d+$/.test(String(d.bookingNumber || ""))) errs.bookingNumber = "Please key in the booking number (digits only).";
   }
   if (NEEDS_FILES.includes(d.assistType) && (!files || files.length === 0)) errs.files = "Please attach at least one receipt, quotation or screenshot.";
@@ -218,14 +211,14 @@ function refreshBid() {
 function applyBookingMode() {
   const prefix = $("bookingPrefix").value;
   const input = $("bookingNumber");
-  const cloud = isCloudbedsPrefix(prefix);
-  input.inputMode = cloud ? "text" : "numeric";
-  input.placeholder = cloud ? "e.g. 6F5H4RS1J6" : "e.g. 363";
-  input.maxLength = cloud ? 10 : 8;
+  const ob = String(prefix || "OB").toUpperCase() === "OB";
+  input.inputMode = ob ? "text" : "numeric";
+  input.placeholder = ob ? "e.g. 363 or 6F5H4RS1J6" : "e.g. 363";
+  input.maxLength = ob ? 10 : 8;
   input.autocomplete = "off";
   input.spellcheck = false;
-  input.autocapitalize = cloud ? "characters" : "off";
-  if (cloud) input.removeAttribute("pattern");
+  input.autocapitalize = ob ? "characters" : "off";
+  if (ob) input.removeAttribute("pattern");
   else input.setAttribute("pattern", "[0-9]*");
   const v = normalizeBookingNumber(prefix, input.value);
   if (input.value !== v) input.value = v;
