@@ -25,7 +25,7 @@ input[type=date]{min-height:42px}
 .seg label:first-child{border-left:0}
 .seg input{position:absolute;opacity:0;width:1px;height:1px}
 .seg label.on{background:var(--fg);color:var(--bg)}
-.bid{display:flex;gap:12px;align-items:flex-end}.bid select{width:96px;flex:none}.bid input{flex:1}
+.bid{display:flex;gap:12px;align-items:flex-end}.bid select{width:128px;flex:none}.bid input{flex:1}
 .hidden{display:none!important}
 .btns{display:flex;gap:10px;margin-top:4px}
 .btn2{flex:1;padding:13px 6px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;border:1px solid var(--fg);background:transparent;color:var(--fg);cursor:pointer;font-family:inherit;text-align:center;margin:0}
@@ -93,8 +93,12 @@ input[type=date]{min-height:42px}
     <div id="bookingBox" class="hidden">
       <label for="bookingNumber" class="req">Booking ID</label>
       <div class="bid">
-        <select id="bookingPrefix"><option>OB</option><option>RES</option></select>
-        <input id="bookingNumber" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="e.g. 363">
+        <select id="bookingPrefix" aria-label="Booking ID type">
+          <option>OB</option>
+          <option>RES</option>
+          <option>Cloudbeds</option>
+        </select>
+        <input id="bookingNumber" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="e.g. 363" autocomplete="off" autocapitalize="off" spellcheck="false">
       </div>
       <div class="hint" id="bidPreview"></div>
       <div class="ferr hidden" data-for="bookingNumber"></div>
@@ -137,9 +141,21 @@ let seq = 0;
 let sending = false;
 
 /* ---------- pure helpers (also used by the smoke test) ---------- */
+function isCloudbedsPrefix(prefix) {
+  return String(prefix || "") === "Cloudbeds";
+}
+function normalizeBookingNumber(prefix, number) {
+  const raw = String(number || "");
+  if (isCloudbedsPrefix(prefix)) return raw.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10);
+  return raw.replace(/\D/g, "");
+}
 function buildBookingId(prefix, number) {
-  const n = String(number || "").replace(/\D/g, "");
-  return n ? String(prefix || "OB").toUpperCase() + n : "";
+  const p = String(prefix || "OB");
+  const n = normalizeBookingNumber(p, number);
+  if (!n) return "";
+  // Cloudbeds reservation IDs are the code itself, e.g. 6F5H4RS1J6. Do not prefix OB and do not drop letters.
+  if (isCloudbedsPrefix(p)) return n;
+  return p.toUpperCase() + n;
 }
 function fmtSize(b) {
   return b >= 1048576 ? (b / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(b / 1024)) + " KB";
@@ -157,7 +173,11 @@ function validate(d, files) {
   if (!Number.isInteger(n) || n < 1 || n > 60) errs.nights = "Nights must be 1 to 60.";
   if (!["New Booking", "Clear Payment", "Other"].includes(d.assistType)) errs.assist = "Please choose what you need help with.";
   if (d.assistType === "Other" && !String(d.otherText || "").trim()) errs.otherText = "Please describe what you need.";
-  if (d.assistType === "Clear Payment" && !/^\d+$/.test(String(d.bookingNumber || ""))) errs.bookingNumber = "Please key in the booking number (digits only).";
+  if (d.assistType === "Clear Payment") {
+    if (isCloudbedsPrefix(d.bookingPrefix)) {
+      if (!/^[A-Z0-9]{10}$/.test(String(d.bookingId || ""))) errs.bookingNumber = "Please key in the 10-character Cloudbeds ID (letters and digits).";
+    } else if (!/^\d+$/.test(String(d.bookingNumber || ""))) errs.bookingNumber = "Please key in the booking number (digits only).";
+  }
   if (NEEDS_FILES.includes(d.assistType) && (!files || files.length === 0)) errs.files = "Please attach at least one receipt, quotation or screenshot.";
   const total = (files || []).reduce((s, f) => s + (f.size || 0), 0);
   if (total > MAX_TOTAL_BYTES) errs.files = "Attachments are " + fmtSize(total) + ". Please keep the total under " + fmtSize(MAX_TOTAL_BYTES) + ".";
@@ -170,7 +190,7 @@ function readForm() {
   const a = document.querySelector('input[name="assist"]:checked');
   const assistType = a ? a.value : "";
   const prefix = $("bookingPrefix").value;
-  const number = $("bookingNumber").value.trim();
+  const number = normalizeBookingNumber(prefix, $("bookingNumber").value);
   return {
     pic: $("pic").value,
     checkIn: $("checkIn").value,
@@ -189,11 +209,27 @@ function refreshAssist() {
   $("otherBox").classList.toggle("hidden", t !== "Other");
   $("bookingBox").classList.toggle("hidden", t !== "Clear Payment");
   $("filesLbl").classList.toggle("req", NEEDS_FILES.includes(t));
-  refreshBid();
+  applyBookingMode();
 }
 function refreshBid() {
   const id = buildBookingId($("bookingPrefix").value, $("bookingNumber").value);
   $("bidPreview").textContent = id ? "Booking ID: " + id : "";
+}
+function applyBookingMode() {
+  const prefix = $("bookingPrefix").value;
+  const input = $("bookingNumber");
+  const cloud = isCloudbedsPrefix(prefix);
+  input.inputMode = cloud ? "text" : "numeric";
+  input.placeholder = cloud ? "e.g. 6F5H4RS1J6" : "e.g. 363";
+  input.maxLength = cloud ? 10 : 8;
+  input.autocomplete = "off";
+  input.spellcheck = false;
+  input.autocapitalize = cloud ? "characters" : "off";
+  if (cloud) input.removeAttribute("pattern");
+  else input.setAttribute("pattern", "[0-9]*");
+  const v = normalizeBookingNumber(prefix, input.value);
+  if (input.value !== v) input.value = v;
+  refreshBid();
 }
 function showErrors(errs) {
   document.querySelectorAll(".ferr").forEach(e => { e.classList.add("hidden"); e.textContent = ""; });
@@ -346,8 +382,13 @@ function resetForm(keepPic) {
 function init() {
   try { const p = localStorage.getItem("play_assist_pic"); if (p) $("pic").value = p; } catch (e) {}
   document.querySelectorAll('input[name="assist"]').forEach(r => r.addEventListener("change", refreshAssist));
-  $("bookingPrefix").addEventListener("change", refreshBid);
-  $("bookingNumber").addEventListener("input", e => { const v = e.target.value.replace(/\D/g, ""); if (v !== e.target.value) e.target.value = v; refreshBid(); });
+  $("bookingPrefix").addEventListener("change", applyBookingMode);
+  $("bookingNumber").addEventListener("input", () => {
+    const input = $("bookingNumber");
+    const v = normalizeBookingNumber($("bookingPrefix").value, input.value);
+    if (v !== input.value) input.value = v;
+    refreshBid();
+  });
   $("fileInput").addEventListener("change", async e => { for (const f of Array.from(e.target.files || [])) await addBlob(f, f.name || "file"); e.target.value = ""; });
   $("pasteBtn").addEventListener("click", pasteFromButton);
   const zone = $("pasteZone"), zoneText = zone.textContent;
